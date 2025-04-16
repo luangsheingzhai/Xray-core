@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -231,11 +232,13 @@ func (s *Server) handleConnect(ctx context.Context, _ *http.Request, reader *buf
 var errWaitAnother = errors.New("keep alive")
 
 func (s *Server) handlePlainHTTP(ctx context.Context, request *http.Request, writer io.Writer, dest net.Destination, dispatcher routing.Dispatcher) error {
+	fmt.Printf("222222222222222")
 	if !s.config.AllowTransparent && request.URL.Host == "" {
+		fmt.Printf("33333333333333")
 		// RFC 2068 (HTTP/1.1) requires URL to be absolute URL in HTTP proxy.
 		response := &http.Response{
-			Status:        "Not Found",
-			StatusCode:    404,
+			Status:        "Bad Request",
+			StatusCode:    400,
 			Proto:         "HTTP/1.1",
 			ProtoMajor:    1,
 			ProtoMinor:    1,

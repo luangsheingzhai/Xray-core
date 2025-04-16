@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -301,10 +302,11 @@ func (a Authenticator) Server(conn net.Conn) net.Conn {
 	if a.config.Request == nil && a.config.Response == nil {
 		return conn
 	}
+	fmt.Printf("1111111111111")
 	return NewConn(conn, new(HeaderReader).ExpectThisRequest(a.config.Request), a.GetServerWriter(),
+		formResponseHeader(resp400),
 		formResponseHeader(resp404),
-		formResponseHeader(resp404),
-		formResponseHeader(resp404))
+		formResponseHeader(resp400))
 }
 
 func NewAuthenticator(ctx context.Context, config *Config) (Authenticator, error) {
