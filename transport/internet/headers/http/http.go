@@ -302,9 +302,9 @@ func (a Authenticator) Server(conn net.Conn) net.Conn {
 		return conn
 	}
 	return NewConn(conn, new(HeaderReader).ExpectThisRequest(a.config.Request), a.GetServerWriter(),
-		formResponseHeader(resp400),
 		formResponseHeader(resp404),
-		formResponseHeader(resp400))
+		formResponseHeader(resp404),
+		formResponseHeader(resp404))
 }
 
 func NewAuthenticator(ctx context.Context, config *Config) (Authenticator, error) {
