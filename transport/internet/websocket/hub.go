@@ -28,12 +28,33 @@ type requestHandler struct {
 
 var replacer = strings.NewReplacer("+", "-", "/", "_", "=", "")
 
+var notFound = []byte(`<html>
+<head><title>404 Not Found</title></head>
+<body>
+<center><h1>404 Not Found</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>`)
+
 var upgrader = &websocket.Upgrader{
 	ReadBufferSize:   0,
 	WriteBufferSize:  0,
 	HandshakeTimeout: time.Second * 4,
 	CheckOrigin: func(r *http.Request) bool {
 		return true
+	},
+	Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
+		// 自定响应错误码
+		w.WriteHeader(http.StatusNotFound)
+		// 自定义响应头
+		w.Header().Set("Server", "nginx")
+		w.Header().Set("Content-Type", "text/html")
+		// 自定义错误响应内容
+		_, err := w.Write(notFound)
+		if err != nil {
+			errors.LogError(context.Background(), "failed to write not found response:", err)
+			return
+		}
 	},
 }
 
