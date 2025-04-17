@@ -28,13 +28,27 @@ type requestHandler struct {
 
 var replacer = strings.NewReplacer("+", "-", "/", "_", "=", "")
 
-var notFound = []byte(`<html>
+var notFoundContent = []byte(`<html>
 <head><title>404 Not Found</title></head>
 <body>
 <center><h1>404 Not Found</h1></center>
 <hr><center>nginx</center>
 </body>
 </html>`)
+
+func notFoundHandler(writer http.ResponseWriter) {
+	// 先设置响应头
+	writer.Header().Set("Server", "nginx")
+	writer.Header().Set("Content-Type", "text/html")
+	// 然后设置状态码
+	writer.WriteHeader(http.StatusNotFound)
+	// 最后写入响应体
+	_, err := writer.Write(notFoundContent)
+	if err != nil {
+		errors.LogError(context.Background(), "failed to write not found response:", err)
+		return
+	}
+}
 
 var upgrader = &websocket.Upgrader{
 	ReadBufferSize:   0,
@@ -43,30 +57,20 @@ var upgrader = &websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		return true
 	},
-	Error: func(w http.ResponseWriter, r *http.Request, status int, reason error) {
-		// 自定响应错误码
-		w.WriteHeader(http.StatusNotFound)
-		// 自定义响应头
-		w.Header().Set("Server", "nginx")
-		w.Header().Set("Content-Type", "text/html")
-		// 自定义错误响应内容
-		_, err := w.Write(notFound)
-		if err != nil {
-			errors.LogError(context.Background(), "failed to write not found response:", err)
-			return
-		}
+	Error: func(writer http.ResponseWriter, r *http.Request, status int, reason error) {
+		notFoundHandler(writer)
 	},
 }
 
 func (h *requestHandler) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	if len(h.host) > 0 && !internet.IsValidHTTPHost(request.Host, h.host) {
 		errors.LogInfo(context.Background(), "failed to validate host, request:", request.Host, ", config:", h.host)
-		writer.WriteHeader(http.StatusNotFound)
+		notFoundHandler(writer)
 		return
 	}
 	if request.URL.Path != h.path {
 		errors.LogInfo(context.Background(), "failed to validate path, request:", request.URL.Path, ", config:", h.path)
-		writer.WriteHeader(http.StatusNotFound)
+		notFoundHandler(writer)
 		return
 	}
 
